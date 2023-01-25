@@ -34,12 +34,12 @@ class GameFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.tvOption1.setOnClickListener{
-            launchGameFinishedFragment(GameResult(true, 0, 0, GameSettings(0,0,0,0)))
+        binding.tvOption1.setOnClickListener {
+            launchGameFinishedFragment(GameResult(true, 0, 0, GameSettings(0, 0, 0, 0)))
         }
     }
 
-    private fun launchGameFinishedFragment(gameResult: GameResult){
+    private fun launchGameFinishedFragment(gameResult: GameResult) {
         requireActivity().supportFragmentManager.beginTransaction()
             .addToBackStack(null)
             .replace(R.id.main_container, GameFinishedFragment.newInstance(gameResult))
@@ -51,11 +51,16 @@ class GameFragment : Fragment() {
         _binding = null
     }
 
-    private fun parseArgs(){
-        level = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireArguments().getParcelable(KEY_LEVEL, Level::class.java)?: throw RuntimeException("level == null")
+    @Suppress("DEPRECATION")
+    private fun parseArgs() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireArguments().getParcelable(KEY_LEVEL, Level::class.java)?.let {
+                level = it
+            }
         }else {
-            requireArguments().getParcelable(KEY_LEVEL)?: throw RuntimeException("level == null")
+            requireArguments().getParcelable<Level>(KEY_LEVEL)?.let {
+                level = it
+            }
         }
     }
 
@@ -63,7 +68,7 @@ class GameFragment : Fragment() {
 
         private const val KEY_LEVEL = "level"
         const val NAME = "GameFragment"
-        fun newInstance(level: Level):GameFragment {
+        fun newInstance(level: Level): GameFragment {
             return GameFragment().apply {
                 arguments = Bundle().apply {
                     putParcelable(KEY_LEVEL, level)
