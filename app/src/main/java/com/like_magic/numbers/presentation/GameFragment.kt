@@ -1,7 +1,6 @@
 package com.like_magic.numbers.presentation
 
 import android.content.res.ColorStateList
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,14 +9,14 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.like_magic.numbers.R
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.like_magic.numbers.databinding.FragmentGameBinding
 import com.like_magic.numbers.domain.entity.GameResult
-import com.like_magic.numbers.domain.entity.Level
 
 class GameFragment : Fragment() {
 
-    private lateinit var level: Level
+    private val args by navArgs<GameFragmentArgs>()
     private var _binding: FragmentGameBinding? = null
     private val binding: FragmentGameBinding
         get() = _binding ?: throw RuntimeException("FragmentGameBinding == null")
@@ -25,8 +24,10 @@ class GameFragment : Fragment() {
     private val viewModel by lazy {
         ViewModelProvider(
             this,
-            GameViewModelFactory(level,
-            requireActivity().application)
+            GameViewModelFactory(
+                args.level,
+                requireActivity().application
+            )
         )[GameViewModel::class.java]
     }
 
@@ -39,11 +40,6 @@ class GameFragment : Fragment() {
             add(binding.tvOption5)
             add(binding.tvOption6)
         }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        parseArgs()
     }
 
     override fun onCreateView(
@@ -60,8 +56,8 @@ class GameFragment : Fragment() {
         setClickListenersToOptions()
     }
 
-    private fun setClickListenersToOptions(){
-        for(tvOption in tvOptions){
+    private fun setClickListenersToOptions() {
+        for (tvOption in tvOptions) {
             tvOption.setOnClickListener {
                 viewModel.chooseAnswer(tvOption.text.toString().toInt())
             }
@@ -90,7 +86,12 @@ class GameFragment : Fragment() {
             )
         }
         viewModel.enoughPercentOfRightAnswers.observe(viewLifecycleOwner) {
-            binding.progressBar.progressTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), getColorByState(it)))
+            binding.progressBar.progressTintList = ColorStateList.valueOf(
+                ContextCompat.getColor(
+                    requireContext(),
+                    getColorByState(it)
+                )
+            )
         }
         viewModel.formattedTime.observe(viewLifecycleOwner) {
             binding.tvTimer.text = it
@@ -101,7 +102,7 @@ class GameFragment : Fragment() {
         viewModel.gameResult.observe(viewLifecycleOwner) {
             launchGameFinishedFragment(it)
         }
-        viewModel.progressAnswers.observe(viewLifecycleOwner){
+        viewModel.progressAnswers.observe(viewLifecycleOwner) {
             binding.tvAnswersProgress.text = it
         }
     }
@@ -116,10 +117,11 @@ class GameFragment : Fragment() {
     }
 
     private fun launchGameFinishedFragment(gameResult: GameResult) {
-        requireActivity().supportFragmentManager.beginTransaction()
-            .addToBackStack(null)
-            .replace(R.id.main_container, GameFinishedFragment.newInstance(gameResult))
-            .commit()
+        findNavController().navigate(
+            GameFragmentDirections.actionGameFragmentToGameFinishedFragment(
+                gameResult
+            )
+        )
     }
 
     override fun onDestroyView() {
@@ -127,29 +129,4 @@ class GameFragment : Fragment() {
         _binding = null
     }
 
-    @Suppress("DEPRECATION")
-    private fun parseArgs() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireArguments().getParcelable(KEY_LEVEL, Level::class.java)?.let {
-                level = it
-            }
-        } else {
-            requireArguments().getParcelable<Level>(KEY_LEVEL)?.let {
-                level = it
-            }
-        }
-    }
-
-    companion object {
-
-        private const val KEY_LEVEL = "level"
-        const val NAME = "GameFragment"
-        fun newInstance(level: Level): GameFragment {
-            return GameFragment().apply {
-                arguments = Bundle().apply {
-                    putParcelable(KEY_LEVEL, level)
-                }
-            }
-        }
-    }
 }
