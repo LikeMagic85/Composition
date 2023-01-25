@@ -6,8 +6,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import com.like_magic.numbers.R
 import com.like_magic.numbers.databinding.FragmentGameFinishedBinding
 import com.like_magic.numbers.domain.entity.GameResult
 
@@ -33,6 +35,33 @@ class GameFinishedFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setClickListeners()
+        renderData(gameResult)
+    }
+
+    private fun renderData(gameResult: GameResult){
+        if (gameResult.winner){
+            binding.emojiResult.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_smile))
+        }else {
+            binding.emojiResult.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_sad))
+        }
+        with(binding){
+            tvRequiredAnswers.text = String.format(resources.getString(R.string.required_score), gameResult.gameSettings.minCountOfRightAnswers)
+            tvRequiredPercentage.text = String.format(resources.getString(R.string.required_percentage), gameResult.gameSettings.minPercentOgRightAnswers)
+            tvScoreAnswers.text= String.format(resources.getString(R.string.score_answers), gameResult.countOfRightAnswers)
+            tvScorePercentage.text =String.format(resources.getString(R.string.score_percentage), getPercentOfRightAnswer(gameResult))
+        }
+    }
+
+    private fun getPercentOfRightAnswer(gameResult: GameResult):Int{
+        return if (gameResult.countOfQuestions == 0){
+            0
+        }else {
+            ((gameResult.countOfRightAnswers / gameResult.countOfQuestions.toDouble())*100).toInt()
+        }
+    }
+
+    private fun setClickListeners() {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
